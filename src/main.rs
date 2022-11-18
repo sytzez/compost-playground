@@ -40,7 +40,7 @@ async fn main() -> std::io::Result<()> {
             .service(index_service)
             .service(run_service)
     })
-    .bind(("127.0.0.1", 8080))?
+    .bind(("127.0.0.1", get_port()))?
     .run()
     .await
 }
@@ -63,7 +63,14 @@ fn get_index_html() -> String {
 fn get_cors() -> Cors {
     Cors::default()
         .allowed_origin("http://compost-playground.sytzez.com")
-        .allowed_origin("http://localhost:8080")
+        .allowed_origin(&format!("http://localhost:{}", get_port()))
         .allowed_methods(vec!["GET", "POST"])
         .max_age(3600)
+}
+
+fn get_port() -> u16 {
+    std::env::var("PORT")
+        .unwrap_or_else(|_| "8080".to_string())
+        .parse::<u16>()
+        .expect("Invalid PORT env variable provided")
 }
