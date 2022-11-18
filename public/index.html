@@ -74,19 +74,23 @@ lets
 
         startRunning()
 
-        const response = await fetch('/run', {
-            method: 'POST',
-            body: new URLSearchParams({ code: codeTextarea.value }),
-        })
+        try {
+            const response = await fetch('/run', {
+                method: 'POST',
+                body: new URLSearchParams({ code: codeTextarea.value }),
+            })
 
-        if (! response.ok) {
-            finishRunning('Something went wrong: ' + response.error().statusText)
-            return;
+            if (! response.ok) {
+                finishRunning('A server error occurred: ' + response.error().statusText)
+                return;
+            }
+
+            const result = await response.text()
+
+            finishRunning(`> ${result}`)
+        } catch (error) {
+            finishRunning('Server request failed: ' + error.message)
         }
-
-        const result = await response.text()
-
-        finishRunning(`> ${result}`)
     }
 
     function startRunning() {
