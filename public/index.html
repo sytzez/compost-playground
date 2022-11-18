@@ -2,13 +2,103 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Compost playground</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+
+    <title>Compost Playground</title>
+    <meta name="description" content="An online playground for the Compost Programming Language">
+
+    <style>
+        html {
+            height: 100%;
+        }
+
+        textarea {
+            resize: none;
+        }
+    </style>
 </head>
-<body>
-<form action="/run" method="post">
-    <label for="code">Code:</label>
-    <textarea name="code" id="code"></textarea>
-    <input type="submit" value="Submit">
+<body class="d-flex flex-column h-100">
+
+<form action="/run" method="post" class="flex-fill d-flex flex-column">
+    <nav class="navbar navbar-light bg-light">
+        <div class="container-fluid">
+            <span class="navbar-brand mb-0 h1">
+                Compost Playground
+            </span>
+            <div>
+                <a href="https://github.com/sytzez/compost" target="_blank" class="btn btn-secondary">
+                    Compost on Github
+                </a>
+                <button type="submit" class="btn btn-primary">
+                    Run
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="flex-fill container-fluid d-flex">
+        <div class="row flex-fill">
+            <div class="col-12 col-md-6 d-flex flex-column">
+                <label for="code">
+                    Code:
+                </label>
+                <textarea name="code" id="code" class="w-100 flex-fill">
+lets
+    Main: String
+        String(value: 'Hello, world')
+                </textarea>
+            </div>
+
+            <div class="col-12 col-md-6 d-flex flex-column">
+                <label for="result">
+                    Result:
+                </label>
+                <textarea id="result" readonly aria-readonly="true" class="w-100 flex-fill"></textarea>
+            </div>
+        </div>
+    </main>
 </form>
+
+<script>
+    const form = document.querySelector('form')
+    const submitButton = document.querySelector('button[type=submit]')
+    const codeTextarea = document.querySelector('textarea#code')
+    const resultTextarea = document.querySelector('textarea#result')
+
+    form.addEventListener('submit', submitListener)
+
+    async function submitListener(event) {
+        event.preventDefault()
+
+        startRunning()
+
+        const response = await fetch('/run', {
+            method: 'POST',
+            body: new URLSearchParams({ code: codeTextarea.value }),
+        })
+
+        if (! response.ok) {
+            finishRunning('Something went wrong: ' + response.error().statusText)
+            return;
+        }
+
+        const result = await response.text()
+
+        finishRunning(`> ${result}`)
+    }
+
+    function startRunning() {
+        resultTextarea.value += 'Running...\n'
+        submitButton.disabled = true
+    }
+
+    function finishRunning(result) {
+        resultTextarea.value += `${result}\n`
+        submitButton.disabled = false
+    }
+</script>
+
 </body>
 </html>

@@ -1,3 +1,4 @@
+use actix_cors::Cors;
 use actix_web::http::header::ContentType;
 use actix_web::web::{Data, Form};
 use actix_web::{post, App, HttpResponse, HttpServer, Responder};
@@ -26,6 +27,7 @@ async fn run_service(form: Form<RunRequest>, state: Data<AppState>) -> impl Resp
 async fn main() -> std::io::Result<()> {
     HttpServer::new(|| {
         App::new()
+            .wrap(get_cors())
             .app_data(get_app_data())
             .service(run_service)
             .service(actix_files::Files::new("/", "./public").index_file("index.html"))
@@ -43,4 +45,12 @@ fn get_app_data() -> Data<AppState> {
 
 fn get_std_code() -> String {
     fs::read_to_string("../compost/lib/std.compost").expect("Unable to locate std.compost")
+}
+
+fn get_cors() -> Cors {
+    Cors::default()
+        .allowed_origin("http://compost-playground.sytzez.com")
+        .allowed_origin("http://localhost:8080")
+        .allowed_methods(vec!["GET", "POST"])
+        .max_age(3600)
 }
