@@ -49,7 +49,7 @@
 lets
     Main: String
         String(value: 'Hello, world')
-                </textarea>
+</textarea>
             </div>
 
             <div class="col-12 col-md-6 d-flex flex-column">
@@ -82,26 +82,27 @@ lets
             })
 
             if (! response.ok) {
-                finishRunning('A server error occurred: ' + response.error().statusText)
-                return;
+                throw new Error(await response.text())
             }
 
-            const result = await response.text()
-
-            finishRunning(`> ${result}`)
+            finishRunning(`> ${await response.text()}`)
         } catch (error) {
-            finishRunning('Server request failed: ' + error.message)
+            finishRunning(`An error occurred: ${error.message}`)
         }
     }
 
     function startRunning() {
-        resultTextarea.value += 'Running...\n'
+        output('Running...')
         submitButton.disabled = true
     }
 
     function finishRunning(result) {
-        resultTextarea.value += `${result}\n`
+        output(result)
         submitButton.disabled = false
+    }
+
+    function output(text) {
+        resultTextarea.value += `${text}\n`
     }
 </script>
 

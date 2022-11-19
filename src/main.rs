@@ -35,12 +35,12 @@ async fn run_service(form: Form<RunRequest>, state: Data<AppState>) -> impl Resp
 async fn main() -> std::io::Result<()> {
     HttpServer::new(|| {
         App::new()
-            .wrap(get_cors())
             .app_data(get_app_data())
+            .wrap(get_cors_middleware())
             .service(index_service)
             .service(run_service)
     })
-    .bind(("127.0.0.1", get_port()))?
+    .bind(("0.0.0.0", get_port()))?
     .run()
     .await
 }
@@ -60,7 +60,7 @@ fn get_index_html() -> String {
     fs::read_to_string("./public/index.html").expect("Unable to locate index.html")
 }
 
-fn get_cors() -> Cors {
+fn get_cors_middleware() -> Cors {
     Cors::default()
         .allowed_origin("http://compost-playground.sytzez.com")
         .allowed_origin(&format!("http://localhost:{}", get_port()))
