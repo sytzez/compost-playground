@@ -1,6 +1,7 @@
 # The Compost Playground
 
 An online playground for the [Compost Programming Language](https://github.com/sytzez/compost).
+It's hosted at [compost-playground.sytzez.com](http://compost-playground.sytzez.com).
 
 ## Quick Start
 
