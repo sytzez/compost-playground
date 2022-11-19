@@ -24,7 +24,10 @@ async fn index_service(state: Data<AppState>) -> impl Responder {
 
 #[post("/run")]
 async fn run_service(form: Form<RunRequest>, state: Data<AppState>) -> impl Responder {
-    let result = compost::run::run_code(&(state.std_code.clone() + &form.code));
+    let result = match compost::run::run_code(&(state.std_code.clone() + &form.code)) {
+        Ok(result) => result,
+        Err(error) => error.message,
+    };
 
     HttpResponse::Ok()
         .content_type(ContentType::plaintext())
