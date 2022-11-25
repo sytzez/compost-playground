@@ -29,6 +29,18 @@
                 Compost Playground
             </span>
             <div>
+                <label for="examples">
+                    Examples:
+                </label>
+                <select id="examples">
+                    <option value="0" selected>Hello, world</option>
+                    <option value="1">Functions and Constants</option>
+                    <option value="2">Traits and Definitions</option>
+                    <option value="3">Automatic Definitions</option>
+                    <option value="4">'Inheritance'</option>
+                </select>
+            </div>
+            <div>
                 <a href="https://github.com/sytzez/compost" target="_blank" class="btn btn-secondary">
                     Compost on Github
                 </a>
@@ -63,47 +75,231 @@ lets
 </form>
 
 <script>
-    const form = document.querySelector('form')
-    const submitButton = document.querySelector('button[type=submit]')
-    const codeTextarea = document.querySelector('textarea#code')
-    const resultTextarea = document.querySelector('textarea#result')
+    (() => {
+        const form = document.querySelector('form')
+        const submitButton = document.querySelector('button[type=submit]')
+        const codeTextarea = document.querySelector('textarea#code')
+        const resultTextarea = document.querySelector('textarea#result')
 
-    form.addEventListener('submit', submitListener)
+        form.addEventListener('submit', submitListener)
 
-    async function submitListener(event) {
-        event.preventDefault()
+        async function submitListener(event) {
+            event.preventDefault()
 
-        startRunning()
+            startRunning()
 
-        try {
-            const response = await fetch('/run', {
-                method: 'POST',
-                body: new URLSearchParams({ code: codeTextarea.value }),
-            })
+            try {
+                const response = await fetch('/run', {
+                    method: 'POST',
+                    body: new URLSearchParams({ code: codeTextarea.value }),
+                })
 
-            if (! response.ok) {
-                throw new Error(await response.text())
+                if (! response.ok) {
+                    throw new Error(await response.text())
+                }
+
+                finishRunning(`> ${await response.text()}`)
+            } catch (error) {
+                finishRunning(`An error occurred: ${error.message}`)
             }
-
-            finishRunning(`> ${await response.text()}`)
-        } catch (error) {
-            finishRunning(`An error occurred: ${error.message}`)
         }
-    }
 
-    function startRunning() {
-        output('Running...')
-        submitButton.disabled = true
-    }
+        function startRunning() {
+            output('Running...')
+            submitButton.disabled = true
+        }
 
-    function finishRunning(result) {
-        output(result)
-        submitButton.disabled = false
-    }
+        function finishRunning(result) {
+            output(result)
+            submitButton.disabled = false
+        }
 
-    function output(text) {
-        resultTextarea.value += `${text}\n`
-    }
+        function output(text) {
+            resultTextarea.value += `${text}\n`
+        }
+    })()
+</script>
+
+<script>
+    (() => {
+        const examplesSelect = document.getElementById('examples')
+        const codeTextarea = document.querySelector('textarea#code')
+        const examples = [
+            `lets
+    Main: String
+        String(value: 'Hello, world')
+`,
+            `lets
+    MyConstant: Int
+        Int(value: 42)
+
+    MyFunction: (a: Int, b: Int) -> Int
+        a + b
+
+    Main: Int
+        MyFunction(a: MyConstant, b: Int(value: 10))
+`,
+`mod Point
+    class
+        x: Int
+        y: Int
+    traits
+        X: Int
+        Y: Int
+        Opposite: Point
+    defs
+        X: x
+        Y: y
+        Opposite
+            Point
+                x: -.X # .X is a shorthand for Self.X
+                y: -.Y
+        # The String definition allows the Point to be an output of Main
+        String: .X.String + String(value: ', ') + .Y.String
+
+lets
+    MyPoint: Point
+        Point
+            x: Int(value: 1)
+            y: Int(value: 2)
+
+    Main: Point
+        MyPoint.Point\\Opposite
+`,
+`mod Point
+    class
+        x: Int
+        y: Int
+    traits
+        X: Int
+        Y: Int
+    defs
+        X: x
+        Y: y
+        String: .X.String + String(value: ', ') + .Y.String
+
+mod Rectangle
+    traits
+        # A 'Rectangle' must have definitions for these traits.
+        TopLeft: Point
+        BottomRight: Point
+        Width: Int
+        Height: Int
+    defs
+        # Some automatic definitions based on other traits we have.
+        TopLeft
+            Point
+                x: .BottomRight.Point\\X - .Width
+                y: .BottomRight.Point\\Y - .Height
+        BottomRight
+            Point
+                x: .TopLeft.Point\\X + .Width
+                y: .TopLeft.Point\\Y + .Height
+        Width: .BottomRight.Point\\X - .TopLeft.Point\\X
+        Height: .BottomRight.Point\\Y - .TopLeft.Point\\Y
+
+# A class that implements 'Rectangle', constructed using a point an size.
+mod RectangleBySize
+    class
+        topLeft: Point
+        width: Int
+        height: Int
+    defs
+        Rectangle\\TopLeft: topLeft
+        Rectangle\\Width: width
+        Rectangle\\Height: height
+        # BottomRight is automatically defined for this class using the definition on the Rectangle module.
+
+# A class that implements 'Rectangle', constructed using two points.
+mod RectangleByPoints
+    class
+        topLeft: Point
+        bottomRight: Point
+    defs
+        Rectangle\\TopLeft: topLeft
+        Rectangle\\BottomRight: bottomRight
+        # Width and Height are automatically defined for this class using the definitions on the Rectangle module.
+
+lets
+    # Rectangle is the type of this constant.
+    # RectangleBySize implements the Rectangle type because it defines all traits of Rectangle.
+    A: Rectangle
+        RectangleBySize
+            topLeft
+                Point
+                    x: Int(value: 10)
+                    y: Int(value: 5)
+            width: Int(value: 20)
+            height: Int(value: 10)
+
+    # RectangleByPoints implements the Rectangle type because it defines all traits of Rectangle.
+    B: Rectangle
+        RectangleByPoints
+            topLeft
+                Point
+                    x: Int(value: 10)
+                    y: Int(value: 5)
+            bottomRight
+                Point
+                    x: Int(value: 15)
+                    y: Int(value: 15)
+
+    # The following Constants are calculated using the automatic definitions from the Rectangle module.
+    BottomRightOfA: Point
+        A.Rectangle\\BottomRight
+
+    WidthOfB: Int
+        B.Rectangle\\Width
+
+    HeightOfB: Int
+        B.Rectangle\\Height
+
+    Main: String
+        String(value: 'BottomRight of A: ') + BottomRightOfA.String
+        + String(value: '. Width and Height of B: ') + WidthOfB.String
+        + String(value: ', ') + HeightOfB.String
+`,
+`mod Rectangle
+    class(x: Int, y: Int, width: Int, height: Int)
+    traits(X: Int, Y: Int, Width: Int, Height: Int, Area: Int)
+    defs
+        X: x
+        Y: y
+        Width: width
+        Height: height
+        Area: .Width * .Height
+
+# Square 'inherits' from Rectangle by defining some of its traits.
+# The remaining traits are 'inherited' from the Rectangle class.
+# The Square implements the Rectangle type because if defines all of its traits.
+mod Square
+    class(x: Int, y: Int, size: Int)
+    defs
+        Rectangle\\X: x
+        Rectangle\\Y: y
+        # Overrides the rectangle Width and Height
+        Rectangle\\Width: size
+        Rectangle\\Height: size
+        # Rectangle\\Area is automatically implemented
+
+lets
+    Main: Int
+        Square
+            x: 1
+            y: 1
+            size: 10
+        .Rectangle\\Area
+`,
+        ]
+
+        examplesSelect.addEventListener('change', changeListener)
+
+        function changeListener() {
+            const selectedIndex = +examplesSelect.value
+
+            codeTextarea.value = examples[selectedIndex]
+        }
+    })()
 </script>
 
 </body>
